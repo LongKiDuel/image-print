@@ -13,14 +13,13 @@ Write_info_ext::Write_info_ext(const Write_info &basic_info) {
   auto rad = atan2(center_y, center_x);
 
   float percent = (rad) / std::numbers::pi / 2;
-  if (rad < 0) {
-    percent += 0.5f;
-  }
+
 
   this->center_x = center_x;
   this->center_y = center_y;
 
   this->center_distance = distance;
   this->center_radian = rad;
+  this->center_circle_degree_percent = percent;
 };
 } // namespace image_printer
