@@ -3,33 +3,26 @@
 #include "grid_check.h"
 #include "grid_fill.h"
 #include "image_printer.h"
+#include "img.h"
 #include "pencil.h"
 #include "printer_extentions.h"
 #include "rand_hsb.h"
 #include "rand_rgb.h"
+#include "voronoi_img.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <ctime>
 #include <iostream>
 #include <numbers>
 #include <span>
+#include <string>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include <stb_image_write.h>
-struct Img {
-  int width;
-  int height;
-  int channel;
-  char *data() {
-    if (!buffer) {
-      buffer = new char[width * height * channel];
-    }
-    return buffer;
-  }
-  char *buffer{};
-};
-int main() {
+
+void extern_main() {
   const int len = 4096;
   Img i{len, len, 3};
   auto old_callback = [](const image_printer::Write_info &info) {
@@ -137,6 +130,16 @@ int main() {
   stbi_write_png("line_gama.png", line_img.width, line_img.height,
                  line_img.channel, line_img.data(),
                  line_img.width * line_img.channel);
-
+}
+int main() {
+  auto write_image = [](auto name, auto img) {
+    stbi_write_png(name, img.width, img.height, img.channel, img.data(),
+                   img.width * img.channel);
+  };
+  auto tm = time(nullptr);
+  std::string t = ctime(&tm);
+  t.pop_back();
+  t = t + "voronoi.png";
+  write_image(t.c_str(), image_printer::generate_voronoi_img(1024, 16));
   return 0;
 }
