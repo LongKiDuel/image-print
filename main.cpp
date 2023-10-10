@@ -3,6 +3,7 @@
 #include "grid_check.h"
 #include "grid_fill.h"
 #include "image_printer.h"
+#include "pencil.h"
 #include "printer_extentions.h"
 #include <algorithm>
 #include <array>
@@ -84,9 +85,11 @@ int main() {
     const int block_pix = 125;
     const int img_size = 4096;
     const float border_ratio = 0.1;
-    float pos = image_printer::grid_border(info.coord_u, img_size / block_pix,border_ratio);
-    float posy = image_printer::grid_border(info.coord_v, img_size / block_pix,border_ratio);
-    pos = std::max(pos,posy); 
+    float pos = image_printer::grid_border(info.coord_u, img_size / block_pix,
+                                           border_ratio);
+    float posy = image_printer::grid_border(info.coord_v, img_size / block_pix,
+                                            border_ratio);
+    pos = std::max(pos, posy);
     colors::Hsb hsb{0, 0, pow<float>(pos, 1 / gamma) * 100};
 
     auto rgb = colors::hsbToRgb(hsb);
@@ -102,8 +105,21 @@ int main() {
   stbi_write_png("line.png", line_img.width, line_img.height, line_img.channel,
                  line_img.data(), line_img.width * line_img.channel);
   image_printer::write_image(line_img, line_gama_callback);
-  auto white = std::array<uint8_t, 3>{255,255,255};
-  image_printer::grid_index_paint(line_img, 4096/ 125, 4096/125, 4, 4, std::span{white});
+  auto white = std::array<uint8_t, 3>{255, 255, 255};
+  image_printer::grid_index_paint(line_img, 4096 / 125, 4096 / 125, 4, 4,
+                                  std::span{white});
+  for (int i = 0; i < 4096; i++) {
+    image_printer::paint_with_pencil(line_img, i, i, 5, 0.7, std::span{white});
+  }
+  for(float i=0;i<std::numbers::pi*2;i+=0.01){
+    const float center = 4096 / 2;
+    const float len = 500;
+    const float thickness = 20;
+    const float x = len * cos(i) + center;
+    const float y = len * sin(i) + center;
+    colors::Hsb hsb{i/(float)std::numbers::pi/2 * 360,100,100};
+    image_printer::paint_with_pencil(line_img, x, y, thickness, 0.9, colors::hsbToRgb(hsb).data_span());
+  }
   stbi_write_png("line_gama.png", line_img.width, line_img.height,
                  line_img.channel, line_img.data(),
                  line_img.width * line_img.channel);

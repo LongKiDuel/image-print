@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <span>
 namespace colors {
 
 class Rgb_u8 {
@@ -35,7 +36,9 @@ public:
             callback(i);
         }
     }
-
+    std::span<const uint8_t, 3> data_span()const{
+        return storage_;
+    }
 private:
     std::array<uint8_t, 3> storage_;
 };
