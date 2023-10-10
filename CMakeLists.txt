@@ -24,3 +24,5 @@ include(CPack)
 
 include(GNUInstallDirs)
 
+find_package(Stb REQUIRED)
+target_include_directories(main PRIVATE ${Stb_INCLUDE_DIR})
