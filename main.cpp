@@ -6,6 +6,7 @@
 #include "pencil.h"
 #include "printer_extentions.h"
 #include "rand_hsb.h"
+#include "rand_rgb.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -110,10 +111,10 @@ int main() {
     const auto size = 4096 / 125;
     for (int i = 0; i < size; i++) {
       for (int j = 0; j < size; j++) {
-
-        image_printer::grid_index_paint(
-            line_img, size, size, i, j,
-            colors::hsbToRgb(colors::rand_hsb()).data_span());
+        auto color = i > size / 2 ? colors::rand_rgb()
+                                  : colors::hsbToRgb(colors::rand_hsb());
+        image_printer::grid_index_paint(line_img, size, size, j, i,
+                                        color.data_span());
       }
     }
   }
