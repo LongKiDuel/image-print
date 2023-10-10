@@ -3,6 +3,7 @@
 #include "grid_check.h"
 #include "image_printer.h"
 #include "printer_extentions.h"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <numbers>
@@ -63,8 +64,8 @@ int main() {
 
     info(std::span<char>{(char *)buffer, 3});
   };
-  const int line_len = 1024;
-  Img line_img{line_len, 20, 3};
+  const int line_len = 4096;
+  Img line_img{line_len, line_len, 3};
   auto line_callback = [](const image_printer::Write_info &info) {
     colors::Hsb hsb{0, 0, (info.coord_u) * 100};
     auto rgb = colors::hsbToRgb(hsb);
@@ -77,7 +78,12 @@ int main() {
     const float gamma = 2.2f;
     // do encode to gamma
     // to decode do: pow(v,gamma)
-    float pos = image_printer::grid_border(info.coord_u, 12);
+    const int block_pix = 125;
+    const int img_size = 4096;
+    const float border_ratio = 0.2;
+    float pos = image_printer::grid_border(info.coord_u, img_size / block_pix,border_ratio);
+    float posy = image_printer::grid_border(info.coord_v, img_size / block_pix,border_ratio);
+    pos = std::max(pos,posy); 
     colors::Hsb hsb{0, 0, pow<float>(pos, 1 / gamma) * 100};
 
     auto rgb = colors::hsbToRgb(hsb);
