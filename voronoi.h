@@ -23,7 +23,7 @@ public:
       }
     }
   }
- Voronoi_nearest_result find_nearest(float u,float v){
+  Voronoi_nearest_result find_nearest(float u, float v) {
     uint64_t dx = u * grid_size;
     uint64_t dy = v * grid_size;
 
@@ -52,10 +52,10 @@ public:
         point.y += ddy;
 
         auto distance = this->distance(this_point, point);
-        if(distance<=min_distance){
-            auto id = id_from_2d_coord(x, y);
-            min_distance = distance;
-            peer_id = id; 
+        if (distance <= min_distance) {
+          auto id = id_from_2d_coord(x, y);
+          min_distance = distance;
+          peer_id = id;
         }
       }
     }
@@ -63,10 +63,8 @@ public:
     result.distance = min_distance;
     result.id = peer_id;
     return result;
- };
-  float distance(float u, float v) {
-    return find_nearest(u, v).distance;
-  }
+  };
+  float distance(float u, float v) { return find_nearest(u, v).distance; }
 
 private:
   uint64_t id_from_2d_coord(uint64_t x, uint64_t y) {
@@ -77,7 +75,13 @@ private:
     float y;
   };
   static float distance(const Point &a, const Point &b) {
+    return distance_in_manhattan(a, b);
+  }
+  static float distance_in_euclidean(const Point &a, const Point &b) {
     return std::sqrt(pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
+  }
+  static float distance_in_manhattan(const Point &a, const Point &b) {
+    return std::abs(a.x - b.x) + std::abs(a.y - b.y);
   }
   static float dice() { return static_cast<float>(rand()) / RAND_MAX; }
   static Point rand_point() { return Point{dice(), dice()}; }
