@@ -2,6 +2,7 @@
 #include "image_printer.h"
 #include "img.h"
 #include "voronoi.h"
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -16,6 +17,8 @@ inline Img generate_voronoi_img(int px, uint64_t grid) {
     // d = std::max<float>(0,1-d);
 
     d = std::min<float>(1,d);
+    // d = sqrt(d);
+    d = pow(d,2);
 
     uint8_t color[1];
     color[0] = d*255.99;

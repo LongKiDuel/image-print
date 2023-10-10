@@ -21,7 +21,35 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include <stb_image_write.h>
+auto write_image = [](auto name, auto img) {
+  stbi_write_png(name, img.width, img.height, img.channel, img.data(),
+                 img.width * img.channel);
+};
+Img generateGridImg() {
+  const int block_pix = 125;
+  const int img_size_x = 4096;
+  const int img_size_y = 2048;
+  const float border_ratio = 0.125;
+  Img image{img_size_x, img_size_y, 1};
+  auto line_gama_callback = [&](const image_printer::Write_info &info) {
+    float pos = image_printer::grid_border(
+        info.coord_u , img_size_x / block_pix, border_ratio);
+    float posy = image_printer::grid_border(
+        info.coord_v , img_size_y / block_pix, border_ratio);
+    pos = std::max(pos, posy);
+    const float gamma = 2.2f;
+    // do encode to gamma
+    // to decode do: pow(v,gamma)
+    pos = pow(pos, 1 / gamma);
 
+    uint8_t buffer[1];
+    buffer[0] = pos * 255.99;
+
+    info(std::span<char>{(char *)buffer, 1});
+  };
+  image_printer::write_image(image, line_gama_callback);
+  return image;
+}
 void extern_main() {
   const int len = 4096;
   Img i{len, len, 3};
@@ -132,14 +160,12 @@ void extern_main() {
                  line_img.width * line_img.channel);
 }
 int main() {
-  auto write_image = [](auto name, auto img) {
-    stbi_write_png(name, img.width, img.height, img.channel, img.data(),
-                   img.width * img.channel);
-  };
+
   auto tm = time(nullptr);
-  std::string t = ctime(&tm);
-  t.pop_back();
-  t = t + "voronoi.png";
+  std::string t_str = ctime(&tm);
+  t_str.pop_back();
+  auto t = t_str + "voronoi.png";
   write_image(t.c_str(), image_printer::generate_voronoi_img(1024, 16));
+  write_image((t_str + "grid.png").c_str(), generateGridImg());
   return 0;
 }
