@@ -8,6 +8,10 @@
 #include <span>
 #include <vector>
 namespace image_printer {
+struct Voronoi_nearest_result {
+  uint64_t id;
+  float distance;
+};
 class Voronoi {
 public:
   Voronoi(uint64_t grid_size) : grid_size(grid_size) {
@@ -19,7 +23,7 @@ public:
       }
     }
   }
-  float distance(float u, float v) {
+ Voronoi_nearest_result find_nearest(float u,float v){
     uint64_t dx = u * grid_size;
     uint64_t dy = v * grid_size;
 
@@ -34,6 +38,7 @@ public:
       return i - 1;
     };
     float min_distance = 3;
+    uint64_t peer_id = -1;
     for (uint64_t y = safe_decrease(dy); y <= dy + 1; y++) {
       for (uint64_t x = safe_decrease(dx); x <= dx + 1; x++) {
         if (x >= grid_size || y >= grid_size) {
@@ -47,13 +52,26 @@ public:
         point.y += ddy;
 
         auto distance = this->distance(this_point, point);
-        min_distance = std::min(min_distance, distance);
+        if(distance<=min_distance){
+            auto id = id_from_2d_coord(x, y);
+            min_distance = distance;
+            peer_id = id; 
+        }
       }
     }
-    return min_distance;
+    Voronoi_nearest_result result;
+    result.distance = min_distance;
+    result.id = peer_id;
+    return result;
+ };
+  float distance(float u, float v) {
+    return find_nearest(u, v).distance;
   }
 
 private:
+  uint64_t id_from_2d_coord(uint64_t x, uint64_t y) {
+    return y * grid_size + x;
+  }
   struct Point {
     float x;
     float y;

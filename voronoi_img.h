@@ -12,7 +12,8 @@ inline Img generate_voronoi_img(int px, uint64_t grid) {
   Img img{px, px, 1};
   Voronoi voronoi{grid};
   write_image(img, [&voronoi](Write_info info) {
-    auto d = voronoi.distance(info.coord_u, info.coord_v);
+    auto result = voronoi.find_nearest(info.coord_u, info.coord_v);
+    auto d = result.distance;
     // std::cout << d <<"\n";
     // d = std::max<float>(0,1-d);
 
