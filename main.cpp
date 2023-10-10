@@ -165,7 +165,7 @@ int main() {
   std::string t_str = ctime(&tm);
   t_str.pop_back();
   auto t = t_str + "voronoi.png";
-  write_image(t.c_str(), image_printer::generate_voronoi_img(1024, 16));
+  write_image(t.c_str(), image_printer::generate_voronoi_img_with_color(1024, 64));
   write_image((t_str + "grid.png").c_str(), generateGridImg());
   return 0;
 }
