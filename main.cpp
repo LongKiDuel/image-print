@@ -77,8 +77,7 @@ int main() {
     const float gamma = 2.2f;
     // do encode to gamma
     // to decode do: pow(v,gamma)
-    float pos = image_printer::grid_index(info.coord_u, 16);
-    pos /= 16.f;
+    float pos = image_printer::grid_border(info.coord_u, 12);
     colors::Hsb hsb{0, 0, pow<float>(pos, 1 / gamma) * 100};
 
     auto rgb = colors::hsbToRgb(hsb);
