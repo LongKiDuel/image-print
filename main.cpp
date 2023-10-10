@@ -1,10 +1,13 @@
 #include "colors.h"
 #include "colors_convert.h"
 #include "grid_check.h"
+#include "grid_fill.h"
 #include "image_printer.h"
 #include "printer_extentions.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <numbers>
 #include <span>
@@ -80,7 +83,7 @@ int main() {
     // to decode do: pow(v,gamma)
     const int block_pix = 125;
     const int img_size = 4096;
-    const float border_ratio = 0.2;
+    const float border_ratio = 0.1;
     float pos = image_printer::grid_border(info.coord_u, img_size / block_pix,border_ratio);
     float posy = image_printer::grid_border(info.coord_v, img_size / block_pix,border_ratio);
     pos = std::max(pos,posy); 
@@ -99,6 +102,8 @@ int main() {
   stbi_write_png("line.png", line_img.width, line_img.height, line_img.channel,
                  line_img.data(), line_img.width * line_img.channel);
   image_printer::write_image(line_img, line_gama_callback);
+  auto white = std::array<uint8_t, 3>{255,255,255};
+  image_printer::grid_index_paint(line_img, 4096/ 125, 4096/125, 4, 4, std::span{white});
   stbi_write_png("line_gama.png", line_img.width, line_img.height,
                  line_img.channel, line_img.data(),
                  line_img.width * line_img.channel);
