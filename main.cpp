@@ -1,3 +1,5 @@
+#include "colors.h"
+#include "colors_convert.h"
 #include "image_printer.h"
 #include <cmath>
 #include <iostream>
@@ -43,6 +45,12 @@ int main() {
 
     buffer[index] = fmod(density,1) * ratio  * 255;
     buffer[last_i] = fmod(density,1) * (1- ratio) * 255;
+    colors::Hsb hsb{percent / 3 * 360,100,100};
+    auto  rgb = colors::hsbToRgb(hsb);
+    rgb.for_each([pointer = buffer](auto c)mutable{
+      *(pointer++) = c;
+    });
+
 
     info(std::span<char>{(char*)buffer,3});
   });
