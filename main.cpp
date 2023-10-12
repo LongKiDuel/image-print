@@ -52,7 +52,7 @@ Img generateGridImg() {
   image_printer::write_image(image, line_gama_callback);
   return image;
 }
-void extern_main() {
+Img generateRingImg() {
   const int len = 4096;
   Img i{len, len, 3};
   auto old_callback = [](const image_printer::Write_info &info) {
@@ -78,12 +78,20 @@ void extern_main() {
 
     buffer[index] = fmod(density, 1) * ratio * 255;
     buffer[last_i] = fmod(density, 1) * (1 - ratio) * 255;
-    colors::Hsb hsb{percent / 3 * 360, 100, 100};
+    // make it into a ring.
+    density = fmod(density,1);
+    colors::Hsb hsb{percent / 3 * 360, 100, 100 * density};
     auto rgb = colors::hsbToRgb(hsb);
     rgb.for_each([pointer = buffer](auto c) mutable { *(pointer++) = c; });
 
     info(std::span<char>{(char *)buffer, 3});
   };
+  image_printer::write_image(i, old_callback);
+  return i;
+}
+void extern_main() {
+  const int len = 4096;
+  Img i{len, len, 3};
   auto new_callback = [](const image_printer::Write_info &info) {
     image_printer::Write_info_ext ext{info};
     colors::Hsb hsb{0, 0, ext.center_circle_degree_percent * 100};
@@ -248,7 +256,10 @@ int main() {
       pixel.pixel_buffer[0] = 0;
     }
   });
-  image_printer::bitblt(iter,large_iter);
+  auto ring = generateRingImg();
+  auto ring_iter = create_image_iter(ring);
+  image_printer::bitblt(ring_iter, large_iter);
+
 
   write_image((t_str + "grid.png").c_str(), grid);
   write_image((t_str + "large grid.png").c_str(), large_image);
