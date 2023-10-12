@@ -1,3 +1,4 @@
+#include "bitmap_iter.h"
 #include "colors.h"
 #include "colors_convert.h"
 #include "grid_check.h"
@@ -12,6 +13,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <iostream>
@@ -32,10 +34,10 @@ Img generateGridImg() {
   const float border_ratio = 0.125;
   Img image{img_size_x, img_size_y, 1};
   auto line_gama_callback = [&](const image_printer::Write_info &info) {
-    float pos = image_printer::grid_border(
-        info.coord_u , img_size_x / block_pix, border_ratio);
+    float pos = image_printer::grid_border(info.coord_u, img_size_x / block_pix,
+                                           border_ratio);
     float posy = image_printer::grid_border(
-        info.coord_v , img_size_y / block_pix, border_ratio);
+        info.coord_v, img_size_y / block_pix, border_ratio);
     pos = std::max(pos, posy);
     const float gamma = 2.2f;
     // do encode to gamma
@@ -159,13 +161,86 @@ void extern_main() {
                  line_img.channel, line_img.data(),
                  line_img.width * line_img.channel);
 }
+
+image_printer::Bimmap_iter<char> create_image_iter(Img &image) {
+  image_printer::Bimmap_iter<char>::Image_context ctx(
+      std::span{image.data(),
+                (size_t)image.channel * image.width * image.height},
+      image.width, image.height, image.channel * image.width, image.channel);
+
+  return ctx;
+}
+namespace image_printer {
+
+bool bitblt(Bimmap_iter<char> &src, int offset_x, int offset_y, int width,
+            int height, Bimmap_iter<char> &dest, int dest_offset_x,
+            int dest_offset_y) {
+  bool ok{true};
+  using Int = int;
+  for (Int y = offset_y; y < offset_y + height; y++) {
+    for (Int x = offset_x; x < offset_x + width; x++) {
+      auto pix = src.lookup_pixel(x, y);
+      auto dest_pix = dest.lookup_pixel(dest_offset_x + x - offset_x,
+                                        dest_offset_y + y - offset_y);
+      if (pix.empty() || dest_pix.empty()) {
+        ok = false;
+        continue;
+      }
+      // if (pix.size() != dest_pix.size()) {
+      //   return false;
+      // }
+      if (pix.size() == 1) {
+        for (auto &p : dest_pix) {
+          p = pix[0];
+        }
+      } else {
+        for (size_t i{}; i < pix.size(); i++) {
+          dest_pix[i] = pix[i];
+        }
+      }
+    }
+  }
+
+  return ok;
+}
+} // namespace image_printer
 int main() {
 
   auto tm = time(nullptr);
   std::string t_str = ctime(&tm);
   t_str.pop_back();
   auto t = t_str + "voronoi.png";
-  write_image(t.c_str(), image_printer::generate_voronoi_img_with_color(1024, 8));
-  write_image((t_str + "grid.png").c_str(), generateGridImg());
+  write_image(t.c_str(),
+              image_printer::generate_voronoi_img_with_color(1024, 8));
+  auto grid = generateGridImg();
+  auto iter = create_image_iter(grid);
+
+  auto large_image = grid;
+
+  large_image.channel = 4;
+  large_image.buffer = nullptr;
+  large_image.width *= 2;
+  large_image.height *= 2;
+  auto large_iter = create_image_iter(large_image);
+  large_iter.for_each_pixel([](decltype(iter)::Pixel_context &pixel){
+    for(auto &p:pixel.pixel_buffer){
+      p = 0;
+    }
+    pixel.pixel_buffer[3] =255;
+  });
+  image_printer::bitblt(iter, 0, 0, grid.width, grid.height, large_iter, 1024,
+                        1024);
+
+  iter.for_each_pixel([](decltype(iter)::Pixel_context &pixel) {
+    if (image_printer::is_boundary<char>(pixel)) {
+      for (auto &ch : pixel.pixel_buffer) {
+        ch = 0;
+      }
+      pixel.pixel_buffer[0] = 0;
+    }
+  });
+
+  write_image((t_str + "grid.png").c_str(), grid);
+  write_image((t_str + "large grid.png").c_str(), large_image);
   return 0;
 }
