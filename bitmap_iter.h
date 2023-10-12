@@ -31,6 +31,10 @@ public:
                                ctx_.channel);
   }
 
+  const uint64_t width() const noexcept { return ctx_.width; }
+  const uint64_t height() const noexcept { return ctx_.height; }
+  const uint64_t channel() const noexcept { return ctx_.channel; }
+
 public:
   struct Image_context {
     std::span<T> buffer;

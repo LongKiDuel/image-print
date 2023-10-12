@@ -171,10 +171,16 @@ image_printer::Bimmap_iter<char> create_image_iter(Img &image) {
   return ctx;
 }
 namespace image_printer {
-
+void default_pixel_copy_i8(std::span<char> src, std::span<char> dest) {
+  auto l = std::min(dest.size(), src.size());
+  for (int i = 0; i < l; i++) {
+    dest[i] = src[i];
+  }
+};
+template <typename Callback>
 bool bitblt(Bimmap_iter<char> &src, int offset_x, int offset_y, int width,
             int height, Bimmap_iter<char> &dest, int dest_offset_x,
-            int dest_offset_y) {
+            int dest_offset_y, Callback pixel_copy) {
   bool ok{true};
   using Int = int;
   for (Int y = offset_y; y < offset_y + height; y++) {
@@ -186,22 +192,25 @@ bool bitblt(Bimmap_iter<char> &src, int offset_x, int offset_y, int width,
         ok = false;
         continue;
       }
-      // if (pix.size() != dest_pix.size()) {
-      //   return false;
-      // }
-      if (pix.size() == 1) {
-        for (auto &p : dest_pix) {
-          p = pix[0];
-        }
-      } else {
-        for (size_t i{}; i < pix.size(); i++) {
-          dest_pix[i] = pix[i];
-        }
-      }
+      pixel_copy(pix, dest_pix);
     }
   }
 
   return ok;
+}
+bool bitblt(Bimmap_iter<char> &src, int offset_x, int offset_y, int width,
+            int height, Bimmap_iter<char> &dest, int dest_offset_x,
+            int dest_offset_y) {
+  return bitblt(src, offset_x, offset_y, width, height, dest, dest_offset_x,
+                dest_offset_y, default_pixel_copy_i8);
+}
+template <typename Callback>
+bool bitblt(Bimmap_iter<char> &src, Bimmap_iter<char> &dest,
+            Callback pixel_copy) {
+  return bitblt(src, 0, 0, src.width(), src.height(), dest, 0, 0, pixel_copy);
+}
+bool bitblt(Bimmap_iter<char> &src, Bimmap_iter<char> &dest) {
+  return bitblt(src, dest, default_pixel_copy_i8);
 }
 } // namespace image_printer
 int main() {
@@ -222,11 +231,11 @@ int main() {
   large_image.width *= 2;
   large_image.height *= 2;
   auto large_iter = create_image_iter(large_image);
-  large_iter.for_each_pixel([](decltype(iter)::Pixel_context &pixel){
-    for(auto &p:pixel.pixel_buffer){
+  large_iter.for_each_pixel([](decltype(iter)::Pixel_context &pixel) {
+    for (auto &p : pixel.pixel_buffer) {
       p = 0;
     }
-    pixel.pixel_buffer[3] =255;
+    pixel.pixel_buffer[3] = 255;
   });
   image_printer::bitblt(iter, 0, 0, grid.width, grid.height, large_iter, 1024,
                         1024);
@@ -239,6 +248,7 @@ int main() {
       pixel.pixel_buffer[0] = 0;
     }
   });
+  image_printer::bitblt(iter,large_iter);
 
   write_image((t_str + "grid.png").c_str(), grid);
   write_image((t_str + "large grid.png").c_str(), large_image);
